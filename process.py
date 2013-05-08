@@ -47,6 +47,9 @@ os.system("rm -R " + dest + "/*")
 # truncate table
 cur.execute("TRUNCATE TABLE media.media;")
 
+errors = 0
+f = open('errors.txt','w')
+
 # do the process for each folder, echa folder must be the INE code of the town
 for dir in os.listdir(src):
     
@@ -96,7 +99,8 @@ for dir in os.listdir(src):
         cur.execute(sql)
         result = cur.fetchone()
         if not result or not result[0]:
-            print "Bad code for " + edificio
+            errors = errors + 1;
+            f.write("Not found table to serach %s\n" %(edificio))
             continue
         
         sql = "SELECT nombre FROM %s.%s WHERE %s='%s'" % (result[2],result[3],result[4].replace('|','||'),"2012"+fileName)       
@@ -104,7 +108,8 @@ for dir in os.listdir(src):
         result = cur.fetchone()
         
         if not result or not result[0]:
-            print "Not inserted "+ edificio
+            errors = errors + 1;
+            f.write("Not found element %s [%s]\n" %(edificio,sql))
             continue
         
         #insert into database
@@ -155,7 +160,8 @@ for dir in os.listdir(src):
     cur.execute("INSERT INTO media.media (title,description,id_media_usage,id_media_type,id_equipment,path,id_object_type,visual_order,has_thumbnail) \
                     VALUES (%s, %s,%s,%s,%s,%s,null,-1,false)",(dir,"",4,1,dir,os.path.join(dir,"municipio_principal_pest_fotos",dir + ".jpg")))
     
-
+print "Total errors : %d" + errors    
+f.close()
 conn.commit()
 cur.close()
 conn.close()
